@@ -1,0 +1,31 @@
+{
+  "name": "softinfrontsystems",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/softinfrontsystems.umd.cjs",
+  "module": "./dist/softinfrontsystems.js",
+  "exports": {
+    ".": {
+      "import": "./dist/softinfrontsystems.js",
+      "require": "./dist/softinfrontsystems.umd.cjs"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
+  },
+  "dependencies": {
+    "antd": "^5.8.1",
+    "axios": "^1.4.0",
+    "jsdoc": "^4.0.2"
+  }
+}

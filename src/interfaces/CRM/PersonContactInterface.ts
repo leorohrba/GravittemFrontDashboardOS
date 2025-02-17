@@ -1,0 +1,30 @@
+export interface IPersonContact {
+  personId: number
+  contactId: number
+  contactName: string
+  isActive: boolean
+  role: string
+  emailId: number
+  personContactEmailGuid: string
+  email: string
+  tipoContatoEmail: string
+  phoneId: number
+  personContactPhoneGuid: string
+  phone: string
+  tipoContatoPhone: string
+  cellPhoneId: number
+  personContactCellPhoneGuid: string
+  cellPhone: string
+  tipoContatoCellPhone: string
+  siteId: number
+  site: string
+  personContactSiteGuid: string
+  tipoContatoSite: string
+  isMain: boolean
+  key: number
+  documentCPF: string
+  signature: string
+  guidPersonId: string
+  tipoContato: string
+  personContactGuid: string
+}

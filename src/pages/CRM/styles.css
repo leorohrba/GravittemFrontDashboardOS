@@ -1,0 +1,15 @@
+.crmColorIconGrid {
+  color: #3182ce; /*Cor do ícone que representa o registro e que fica no grid */
+}
+
+.crmColorIconEdit {
+  color: gray; /*Cor do ícone de edição que fica no grid */
+}
+
+.crmColorIconForm {
+  color: gray; /* Cor do ícone que fica no formulário de cadastro */
+}
+
+.crmColorIconPersonGrid {
+  color: gray; /* Cor do ícone que fica no grid de pessoas*/
+}
