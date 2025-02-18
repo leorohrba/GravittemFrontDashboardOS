@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Modal, Row, Skeleton, Spin } from 'antd'
+import { Button, Modal, Row, Skeleton, Spin, Pagination } from 'antd'
 import DefaultTable from '@components/DefaultTable'
 import { customSort, formatNumber } from '@utils'
 import moment from 'moment'
@@ -257,15 +257,18 @@ const ServiceOrderDetailModal = ({
       >
         <Spin size="large" spinning={loading}>
           <Skeleton loading={loading} paragraph={{ rows: 13 }} active>
-            <DefaultTable
-              size="small"
-              rowKey={record => record.numeroOs || record.colaborador}
-              columns={columns}
-              dataSource={
-                Array.isArray(serviceOrderDetail) ? serviceOrderDetail : []
-              }
-            />
-            <div style={{ display: "flex", justifyContent: "end" }}>
+            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <DefaultTable
+                size="small"
+                rowKey={record => record.numeroOs || record.colaborador}
+                columns={columns}
+                dataSource={
+                  Array.isArray(serviceOrderDetail) ? serviceOrderDetail : []
+                }
+                pagination={false}
+              />
+            </div>
+            <div style={{ display: "flex", justifyContent: "end", marginTop: '16px' }}>
               <DefaultTable
                 size="small"
                 style={{ width: '30%' }}
@@ -273,6 +276,15 @@ const ServiceOrderDetailModal = ({
                 columns={columns2}
                 dataSource={colaboradorData}
                 pagination={false}
+              />
+            </div>
+            <div style={{ marginTop: '16px', textAlign: 'right' }}>
+              <Pagination
+                total={serviceOrderDetail.length}
+                pageSize={10}
+                onChange={(page, pageSize) => {
+                  // Handle pagination change
+                }}
               />
             </div>
           </Skeleton>
