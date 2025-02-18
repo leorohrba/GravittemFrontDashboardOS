@@ -69,7 +69,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
   const [serviceOrderDetailParams, setServiceOrderDetailParams] = useState(null)
 
   const [classificacaoOSDataDetail, setClassificacaoOSDataDetail] = useState([])
-  const [horasApontadas, setHorasApontadas] = useState([])
 
   const [filterClients, setFilterClients] = useState([])
   const [filterServices, setFilterServices] = useState([])
@@ -77,12 +76,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
   const [filterClassOS, setFilterClassOS] = useState([])
 
   const [allServiceOrderDetails, setAllServiceOrderDetails] = useState([])
-
-  //   useEffect(() => {
-  //     getProfile().then(() => {
-  //       fetchData(companyId)
-  //     })
-  //   }, [])
 
   useEffect(() => {
     const fetchProfileAndData = async () => {
@@ -93,21 +86,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
     }
     fetchProfileAndData()
   }, [companyId])
-
-  async function loadModalData() {
-    setLoading(true)
-    try {
-      const params = getParams()
-      const response = await apiServices.get('/api/BuscarHorasApontadasView', {
-        params,
-      })
-      setAllServiceOrderDetails(response.data)
-    } catch (error) {
-      console.error('Error fetching service order details:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   async function openServiceOrderDetail(type, id, source) {
     setLoadingDetail(true)
@@ -148,8 +126,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
         detailData = detailData.filter(item => moment(item.dataLiquidacaoOs, moment.ISO_8601, true).isValid())
       } else if (source === 'serviceOrderStateCancel') {
         detailData = detailData.filter(item => moment(item.dataCancelamentoOs, moment.ISO_8601, true).isValid())
-      } else if (source === 'horasApontadas') {
-        detailData = detailData.filter(item => item.source === 'horasApontadas')
       } else if (source === 'serviceOrderRankingService') {
         detailData = detailData.filter(item => item.descricao === id)
       } else if (source === 'serviceOrderRankingClass') {

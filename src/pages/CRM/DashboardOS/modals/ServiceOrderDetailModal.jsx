@@ -20,32 +20,11 @@ const ServiceOrderDetailModal = ({
   profile,
 }) => {
   const [dataExport, setDataExport] = useState([])
+  const [colaboradorData, setColaboradorData] = useState([])
 
   useEffect(() => {
     let exportData = []
 
-    // if (serviceOrderDetailType === 'atendimentoRanking') {
-    //   exportData = [
-    //     {
-    //       columns: [
-    //         'Colaborador',
-    //         'Total Horas Trabalhadas',
-    //         'Total Horas Deslocamento',
-    //         'Total Horas Cobrança',
-    //         'Quantidade de OS',
-    //       ],
-    //       data: Array.isArray(serviceOrderDetail)
-    //         ? serviceOrderDetail.map(item => [
-    //             item.colaborador,
-    //             item.totalHorasTrabalhadas,
-    //             item.totalHorasDeslocamento,
-    //             item.totalHorasCobranca,
-    //             item.qtOS,
-    //           ])
-    //         : [],
-    //     },
-    //   ]
-    // } else {
     exportData = [
       {
         columns: [
@@ -90,6 +69,45 @@ const ServiceOrderDetailModal = ({
     ]
 
     setDataExport(exportData)
+
+    // Calculate total hours for each colaborador
+    const colaboradorMap = new Map()
+    if (Array.isArray(serviceOrderDetail)) {
+      serviceOrderDetail.forEach(order => {
+        const { colaborador, horaInicio, horaFinal, horasTrabalhadas } = order
+        if (!colaboradorMap.has(colaborador)) {
+          colaboradorMap.set(colaborador, { totalWorkedSeconds: 0, totalStoppedSeconds: 0 })
+        }
+        const workedSeconds = moment(horaFinal, 'HH:mm:ss').diff(moment(horaInicio, 'HH:mm:ss'), 'seconds')
+        const workedDuration = moment.duration(workedSeconds, 'seconds')
+        const workedHours = workedDuration.asHours()
+        const workedMinutes = workedDuration.minutes()
+        const workedSecondsFormatted = workedDuration.seconds()
+        const totalWorkedSeconds = colaboradorMap.get(colaborador).totalWorkedSeconds + workedSeconds
+        const totalStoppedSeconds = colaboradorMap.get(colaborador).totalStoppedSeconds + (workedSeconds - moment.duration(horasTrabalhadas).asSeconds())
+        colaboradorMap.set(colaborador, { totalWorkedSeconds, totalStoppedSeconds })
+      })
+    }
+
+    // Format the total hours in HH:MM:SS
+    const colaboradorData = Array.from(colaboradorMap.entries()).map(([name, { totalWorkedSeconds, totalStoppedSeconds }]) => {
+      const workedDuration = moment.duration(totalWorkedSeconds, 'seconds')
+      const workedHours = Math.floor(workedDuration.asHours())
+      const workedMinutes = workedDuration.minutes()
+      const workedSeconds = workedDuration.seconds()
+      const stoppedDuration = moment.duration(totalStoppedSeconds, 'seconds')
+      const stoppedHours = Math.floor(stoppedDuration.asHours())
+      const stoppedMinutes = stoppedDuration.minutes()
+      const stoppedSeconds = stoppedDuration.seconds()
+      return {
+        name,
+        hours: `${workedHours.toString().padStart(2, '0')}:${workedMinutes.toString().padStart(2, '0')}:${workedSeconds.toString().padStart(2, '0')}`,
+        orders: `${stoppedHours.toString().padStart(2, '0')}:${stoppedMinutes.toString().padStart(2, '0')}:${stoppedSeconds.toString().padStart(2, '0')}`,
+      }
+    })
+
+    setColaboradorData(colaboradorData)
+
   }, [serviceOrderDetail, serviceOrderDetailType])
 
   const columns2 = [
@@ -99,10 +117,10 @@ const ServiceOrderDetailModal = ({
       key: 'name',
     },
     {
-      title: 'Horas atendimento',
+      title: 'Horas apontadas',
       dataIndex: 'hours',
       key: 'hours',
-      sorter: (a, b) => a.hours - b.hours,
+      sorter: (a, b) => a.hours.localeCompare(b.hours),
       render: (text, d) => (
         <React.Fragment>
           <span>{d.hours}</span>
@@ -110,10 +128,10 @@ const ServiceOrderDetailModal = ({
       ),
     },
     {
-      title: 'Ordens de serviço',
+      title: 'Horas paradas',
       dataIndex: 'orders',
       key: 'orders',
-      sorter: (a, b) => a.orders - b.orders,
+      sorter: (a, b) => a.orders.localeCompare(b.orders),
       render: (text, d) => (
         <React.Fragment>
           <span>{d.orders}</span>
@@ -122,113 +140,83 @@ const ServiceOrderDetailModal = ({
     },
   ]
 
-  const columns =
-    serviceOrderDetailType === 'atendimentoRanking'
-      ? [
-        {
-          title: 'Colaborador',
-          dataIndex: 'colaborador',
-          sorter: (a, b) => customSort(a.colaborador, b.colaborador),
-        },
-        {
-          title: 'Total Horas Trabalhadas',
-          dataIndex: 'totalHorasTrabalhadas',
-          sorter: (a, b) => a.totalHorasTrabalhadas - b.totalHorasTrabalhadas,
-        },
-        {
-          title: 'Total Horas Deslocamento',
-          dataIndex: 'totalHorasDeslocamento',
-          sorter: (a, b) =>
-            a.totalHorasDeslocamento - b.totalHorasDeslocamento,
-        },
-        {
-          title: 'Total Horas Cobrança',
-          dataIndex: 'totalHorasCobranca',
-          sorter: (a, b) => a.totalHorasCobranca - b.totalHorasCobranca,
-        },
-        {
-          title: 'Quantidade de OS',
-          dataIndex: 'qtOS',
-          sorter: (a, b) => a.qtOS - b.qtOS,
-        },
-      ]
-      : [
-        {
-          title: 'Número OS',
-          dataIndex: 'numeroOs',
-          sorter: (a, b) => a.numeroOs - b.numeroOs,
-        },
-        {
-          title: 'Colaborador',
-          dataIndex: 'colaborador',
-          sorter: (a, b) => customSort(a.colaborador, b.colaborador),
-        },
-        {
-          title: 'Tipo Hora Apontada',
-          dataIndex: 'tipoHoraApontada',
-          sorter: (a, b) =>
-            customSort(a.tipoHoraApontada, b.tipoHoraApontada),
-        },
-        {
-          title: 'Cliente',
-          dataIndex: 'cliente',
-          sorter: (a, b) => customSort(a.cliente, b.cliente),
-        },
-        {
-          title: 'Serviço',
-          dataIndex: 'servico',
-          sorter: (a, b) => customSort(a.servico, b.servico),
-        },
-        {
-          title: 'Status Serviço',
-          dataIndex: 'statusServico',
-          sorter: (a, b) => customSort(a.statusServico, b.statusServico),
-        },
-        {
-          title: 'Status OS',
-          dataIndex: 'statusOs',
-          sorter: (a, b) => customSort(a.statusOs, b.statusOs),
-        },
-        {
-          title: 'Data Apontamento',
-          dataIndex: 'dataApontamento',
-          sorter: (a, b) => customSort(a.dataApontamento, b.dataApontamento),
-          render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
-        },
-        {
-          title: 'Data Criação OS',
-          dataIndex: 'dataCriacaoOs',
-          sorter: (a, b) => customSort(a.dataCriacaoOs, b.dataCriacaoOs),
-          render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
-        },
-        {
-          title: 'Hora Início',
-          dataIndex: 'horaInicio',
-          sorter: (a, b) => customSort(a.horaInicio, b.horaInicio),
-        },
-        {
-          title: 'Hora Final',
-          dataIndex: 'horaFinal',
-          sorter: (a, b) => customSort(a.horaFinal, b.horaFinal),
-        },
-        {
-          title: 'Horas Trabalhadas',
-          dataIndex: 'horasTrabalhadas',
-          sorter: (a, b) =>
-            customSort(a.horasTrabalhadas, b.horasTrabalhadas),
-        },
-        {
-          title: 'Horas Deslocamento',
-          dataIndex: 'horasDeslocamento',
-          sorter: (a, b) =>
-            customSort(a.horasDeslocamento, b.horasDeslocamento),
-        },
-        {
-          title: 'Horas Cobrança',
-          dataIndex: 'horasCobranca',
-          sorter: (a, b) => customSort(a.horasCobranca, b.horasCobranca),
-        },
-      ]
+  const columns = [
+    {
+      title: 'Número OS',
+      dataIndex: 'numeroOs',
+      sorter: (a, b) => a.numeroOs - b.numeroOs,
+    },
+    {
+      title: 'Colaborador',
+      dataIndex: 'colaborador',
+      sorter: (a, b) => customSort(a.colaborador, b.colaborador),
+    },
+    {
+      title: 'Tipo Hora Apontada',
+      dataIndex: 'tipoHoraApontada',
+      sorter: (a, b) =>
+        customSort(a.tipoHoraApontada, b.tipoHoraApontada),
+    },
+    {
+      title: 'Cliente',
+      dataIndex: 'cliente',
+      sorter: (a, b) => customSort(a.cliente, b.cliente),
+    },
+    {
+      title: 'Serviço',
+      dataIndex: 'servico',
+      sorter: (a, b) => customSort(a.servico, b.servico),
+    },
+    {
+      title: 'Status Serviço',
+      dataIndex: 'statusServico',
+      sorter: (a, b) => customSort(a.statusServico, b.statusServico),
+    },
+    {
+      title: 'Status OS',
+      dataIndex: 'statusOs',
+      sorter: (a, b) => customSort(a.statusOs, b.statusOs),
+    },
+    {
+      title: 'Data Apontamento',
+      dataIndex: 'dataApontamento',
+      sorter: (a, b) => customSort(a.dataApontamento, b.dataApontamento),
+      render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
+    },
+    {
+      title: 'Data Criação OS',
+      dataIndex: 'dataCriacaoOs',
+      sorter: (a, b) => customSort(a.dataCriacaoOs, b.dataCriacaoOs),
+      render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
+    },
+    {
+      title: 'Hora Início',
+      dataIndex: 'horaInicio',
+      sorter: (a, b) => customSort(a.horaInicio, b.horaInicio),
+    },
+    {
+      title: 'Hora Final',
+      dataIndex: 'horaFinal',
+      sorter: (a, b) => customSort(a.horaFinal, b.horaFinal),
+    },
+    {
+      title: 'Horas Trabalhadas',
+      dataIndex: 'horasTrabalhadas',
+      sorter: (a, b) =>
+        customSort(a.horasTrabalhadas, b.horasTrabalhadas),
+    },
+    {
+      title: 'Horas Deslocamento',
+      dataIndex: 'horasDeslocamento',
+      sorter: (a, b) =>
+        customSort(a.horasDeslocamento, b.horasDeslocamento),
+    },
+    {
+      title: 'Horas Cobrança',
+      dataIndex: 'horasCobranca',
+      sorter: (a, b) => customSort(a.horasCobranca, b.horasCobranca),
+    },
+  ]
 
   return (
     <React.Fragment>
@@ -283,7 +271,7 @@ const ServiceOrderDetailModal = ({
                 style={{ width: '30%' }}
                 rowKey={record => record.id}
                 columns={columns2}
-                // dataSource={data}
+                dataSource={colaboradorData}
                 pagination={false}
               />
             </div>
