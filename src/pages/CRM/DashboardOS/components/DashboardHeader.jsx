@@ -1,107 +1,79 @@
-import React, { useCallback } from 'react'
-import { DatePicker, Form, Input, Select, Card, Row, Col } from 'antd'
-import PropTypes from 'prop-types'
-import { debounce } from 'lodash'
-// import InputSeller from './InputSeller'
-// import Input from 'antd/lib/input/Input'
+import React, { useEffect } from 'react'
+import { DatePicker, Input, Select, Card, Row, Col } from 'antd'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
 
 export default function DashboardHeader(props) {
   const {
-    viewOptionId,
-    setViewOptionId,
     filterClients,
     filterTypes,
     filterServices,
     filterClassOS,
     rangeDate,
     setRangeDate,
-    profile,
-    setBusinessAreaId,
-    sellerId,
-    setSalesRankingType,
-    setTaskSummaryType,
-    setFilterTypes,
-    setFilterClients,
-    setFilterServices,
-    setFilterClassOS,
+    setFilterParams, // Add this
+    filterParams, // Add this
+    selectedPeriod,
+    setSelectedPeriod,
+    fetchData
   } = props
 
-  const handleChangeRangeDate = (value, type) => {
-    let startDate = type === 'start' ? value : rangeDate[0]
-    let endDate = type === 'end' ? value : rangeDate[1]
-    if (type === 'start' && startDate > endDate) {
-      endDate = startDate
-    } else if (type === 'end' && endDate < startDate) {
-      startDate = endDate
-    }
-    setRangeDate([startDate, endDate])
+  useEffect(() => {
+    fetchData()
+  }, [rangeDate, selectedPeriod, filterParams])
+
+  // Update the handlers to use setFilterParams
+  const handleSetFilterTypes = (value) => {
+    setFilterParams(prev => ({
+      ...prev,
+      tipoOSId: value
+    }))
   }
 
-  // const handleChangeViewOption = value => {
-  //   setViewOptionId(value)
-  //   handleConfigureType(value, sellerId)
-  // }
-
-  // const handleChangeSeller = value => {
-  //   handleConfigureType(viewOptionId, value)
-  // }
-
-  // const handleChangeBusinessArea = value => {
-  //   setBusinessAreaId(value)
-  //   handleConfigureType(viewOptionId, sellerId)
-  // }
-
-    // Create debounced filter setters
-    const debouncedSetFilterTypes = useCallback(
-      debounce((value) => {
-        setFilterTypes(value)
-      }, 500),
-      []
-    )
-
-    const debouncedSetFilterClients = useCallback(
-      debounce((value) => {
-        setFilterClients(value)
-      }, 500),
-      []
-    )
-
-    const debouncedSetFilterServices = useCallback(
-      debounce((value) => {
-        setFilterServices(value)
-      }, 500),
-      []
-    )
-
-    const debouncedSetFilterClassOS = useCallback(
-      debounce((value) => {
-        setFilterClassOS(value)
-      }, 500),
-      []
-    )
-
-  const handleConfigureType = (option, seller) => {
-    const type =
-      profile?.ownerProfile === 'Standard' ||
-      profile?.ownerProfile === 'Franchise' ||
-      (profile?.ownerProfile === 'Franchisor' && option === 3)
-        ? 'seller'
-        : 'franchisee'
-
-    const salesRankingType = seller ? 'businessArea' : type
-    setSalesRankingType(salesRankingType)
-    setTaskSummaryType(type)
+  const handleSetFilterClients = (value) => {
+    setFilterParams(prev => ({
+      ...prev,
+      pessoaId: value
+    }))
   }
 
-  const moveDate = step => {
-    const startDate = rangeDate[0]
-    const endDate = rangeDate[1]
-    startDate.add(step, 'month')
-    endDate.add(step, 'month')
-    setRangeDate([startDate, endDate])
+  const handleSetFilterServices = (value) => {
+    setFilterParams(prev => ({
+      ...prev,
+      servicoId: value
+    }))
+  }
+
+  const handleSetFilterClassOS = (value) => {
+    setFilterParams(prev => ({
+      ...prev,
+      classificacaoOsId: value
+    }))
+  }
+
+  const handleServiceOrderIdChange = (e) => {
+    setFilterParams(prev => ({
+      ...prev,
+      serviceOrderId: e.target.value
+    }))
+  }
+
+  // Update period change handler
+  const handlePeriodChange = (value) => {
+    setSelectedPeriod(value)
+    setFilterParams(prev => ({
+      ...prev,
+      selectedPeriod: value
+    }))
+  }
+
+  const handleRangeDateChange = (dates) => {
+    setRangeDate(dates)
+    setFilterParams(prev => ({
+      ...prev,
+      rangeDate: dates
+    }))
   }
 
   return (
@@ -114,7 +86,7 @@ export default function DashboardHeader(props) {
               mode="multiple"
               placeholder="Selecione os tipos"
               style={{ width: '100%' }}
-              onChange={debouncedSetFilterTypes}
+              onChange={handleSetFilterTypes}
             >
               {filterTypes?.map(client => (
                 <Option key={client.value} value={client.value}>
@@ -122,7 +94,6 @@ export default function DashboardHeader(props) {
                 </Option>
               ))}
             </Select>
-            {/* <Input /> */}
           </Col>
           <Col>
             <Row>
@@ -132,31 +103,34 @@ export default function DashboardHeader(props) {
             </Row>
             <Row type="flex" gutter={12}>
               <Col>
-                <Select value="dtCriacao">
-                  <Option key="1" value="dtCriacao">
+                <Select
+                  style={{ width: '100%' }}
+                  defaultValue="PeriodoCriacaoOs"
+                  onChange={handlePeriodChange}
+                >
+                  <Option key="1" value="PeriodoCriacaoOs">
                     Data de criação
+                  </Option>
+                  <Option key="2" value="periodoApontamento">
+                    Data de apontamento
+                  </Option>
+                  <Option key="3" value="PeriodoLiquidaOs">
+                    Data de liquidação
+                  </Option>
+                  <Option key="4" value="PeriodoCancelaOs">
+                    Data de cancelamento
                   </Option>
                 </Select>
               </Col>
               <Col>
                 <RangePicker
-                  picker="month"
                   allowClear={false}
                   format="DD/MM/YYYY"
-                  onChange={handleChangeRangeDate}
+                  onChange={value => handleRangeDateChange(value)}
                   value={rangeDate}
                 />
               </Col>
             </Row>
-          </Col>
-          <Col
-            style={{
-              //   width: '280px',
-              display: profile?.ownerProfile === 'Standard' ? 'block' : 'none',
-            }}
-          >
-            <h4>Colaboradores</h4>
-            <Input />
           </Col>
           <Col>
             <h4>Cliente</h4>
@@ -164,7 +138,7 @@ export default function DashboardHeader(props) {
               mode="multiple"
               placeholder="Selecione os tipos"
               style={{ width: '30vh' }}
-              onChange={debouncedSetFilterClients}
+              onChange={handleSetFilterClients}
             >
               {filterClients?.map(client => (
                 <Option key={client.value} value={client.value}>
@@ -179,7 +153,7 @@ export default function DashboardHeader(props) {
               mode="multiple"
               placeholder="Selecione os tipos"
               style={{ width: '30vh' }}
-              onChange={debouncedSetFilterServices}
+              onChange={handleSetFilterServices}
             >
               {filterServices?.map(client => (
                 <Option key={client.value} value={client.value}>
@@ -194,7 +168,7 @@ export default function DashboardHeader(props) {
               mode="multiple"
               placeholder="Selecione os tipos"
               style={{ width: '30vh' }}
-              onChange={debouncedSetFilterClassOS}
+              onChange={handleSetFilterClassOS}
             >
               {filterClassOS?.map(client => (
                 <Option key={client.value} value={client.value}>
@@ -205,22 +179,10 @@ export default function DashboardHeader(props) {
           </Col>
           <Col>
             <h4>Ordem de serviço</h4>
-            <Input />
+            <Input onChange={handleServiceOrderIdChange} />
           </Col>
         </Row>
       </Card>
     </div>
   )
-}
-
-DashboardHeader.propTypes = {
-  viewOptionId: PropTypes.number,
-  setViewOptionId: PropTypes.func,
-  rangeDate: PropTypes.array,
-  setRangeDate: PropTypes.func,
-  profile: PropTypes.any,
-  sellerId: PropTypes.number,
-  setBusinessAreaId: PropTypes.func,
-  setSalesRankingType: PropTypes.func,
-  setTaskSummaryType: PropTypes.func,
 }

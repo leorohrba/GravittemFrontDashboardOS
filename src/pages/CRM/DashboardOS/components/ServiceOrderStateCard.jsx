@@ -1,40 +1,18 @@
-import React, { useEffect, useState } from 'react'
-import { Card, Row, Col, Spin, Tooltip } from 'antd'
-import { apiServices } from '@services/api'
-import { addBrlCurrencyToNumber, formatNumber } from '@utils'
+import React from 'react'
+import { Card, Spin, Tooltip } from 'antd'
+import { formatNumber } from '@utils'
 import PropTypes from 'prop-types'
-// import { use } from 'react'
 
 export default function ServiceOrderStateCard({
   type,
   loading,
   openServiceOrderDetail,
   qtOSCriadas,
-  qtOSLiquidadas, 
-  qtOSAguardando, 
+  qtOSLiquidadas,
+  qtOSAguardando,
   qtOSCanceladas,
 }) {
 
-  // const [qtOSCriadas, setQtOSCriadas] = useState(0)
-  // const [qtOSLiquidadas, setQtOSLiquidadas] = useState(0)
-  // const [qtOSAguardando, setQtOSAguardando] = useState(0)
-  // const [qtOSCanceladas, setQtOSCanceladas] = useState(0)
-  const [totalHorasApontadas, setTotalHorasApontadas] = useState(0)
-
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     try {
-  //       const response = await apiServices.get('/api/TotalHorasApontadas')
-  //       setQtOSCriadas(response.data.osCriadas)
-  //       setQtOSLiquidadas(response.data.osLiquidadas)
-  //       setQtOSAguardando(qtOSCriadas-qtOSLiquidadas)
-  //       setQtOSCanceladas(response.data.osCanceladas)
-  //     } catch (error) {
-  //       console.error('Error fetching data:', error)
-  //     }
-  //   }
-  //   fetchData()
-  // }, [])
   return (
     <Spin spinning={loading}>
       <Card>
@@ -49,12 +27,7 @@ export default function ServiceOrderStateCard({
               : type === 4
               ? 'Ordens de serviço canceladas'
               : ''
-            // type === 1 ?
-            // 'Negócios ganhos com data de fechamento conforme período selecionado' :
-            // type === 2 ?
-            // 'Negócios perdidos com data de fechamento conforme período selecionado' :
-            // 'Negócios criados com data de criação conforme período selecionado'
-          }
+            }
         >
           <h4>
             {type === 1
@@ -74,8 +47,6 @@ export default function ServiceOrderStateCard({
           role="button"
           onClick={() => openServiceOrderDetail('serviceOrderState', type)}
         >
-          {/* {formatNumber(proposalState?.quantity || 0, 0)} */}
-          {/* {formatNumber((type%2 === 0) ? 0 : 2)} */}
           {type === 1
               ? formatNumber(qtOSCriadas)
               : type === 2
@@ -86,26 +57,6 @@ export default function ServiceOrderStateCard({
               ? formatNumber(qtOSCanceladas)
               : ''}
         </span>
-        {/* <Row type="flex" gutter={36}>
-          <Col span={12}>
-            <span style={{ color: 'gray' }}>
-              <i>Valor único</i>
-            </span>
-            <br />
-            <span>
-              {addBrlCurrencyToNumber(proposalState?.uniqueValue || 0)}
-            </span>
-          </Col>
-          <Col span={12}>
-            <span style={{ color: 'gray' }}>
-              <i>Valor recorrente</i>
-            </span>
-            <br />
-            <span>
-              {addBrlCurrencyToNumber(proposalState?.recurrenceValue || 0)}
-            </span>
-          </Col>
-        </Row> */}
       </Card>
     </Spin>
   )

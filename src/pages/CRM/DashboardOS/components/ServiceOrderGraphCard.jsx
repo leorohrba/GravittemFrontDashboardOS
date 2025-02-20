@@ -22,7 +22,6 @@ function ServiceOrderGraphCard(props) {
     title,
     type,
     data,
-    salesFunnelName,
     chartHeight,
     loading,
     openProposalDetail,
@@ -34,7 +33,7 @@ function ServiceOrderGraphCard(props) {
   useEffect(() => {
     const dataSource = []
     let total = 0
-  
+
     if (type === 1) {
       data.forEach(r => {
         dataSource.push({
@@ -58,7 +57,7 @@ function ServiceOrderGraphCard(props) {
         total += r.qtOs
       })
     }
-  
+
     setTotalQuantity(total)
     setChartData(dataSource)
   }, [data, type])
@@ -92,13 +91,6 @@ function ServiceOrderGraphCard(props) {
               forceFit
               data={chartData}
               scale={scale}
-              onPlotDblClick={evt => {
-                if (evt.data != null) {
-                  // try {
-                    // openProposalDetail(type, evt.data._origin.id)
-                  // } catch {}
-                }
-              }}
             >
               <Coord type="theta" radius={1} innerRadius={0.6} />
 
@@ -153,16 +145,6 @@ function ServiceOrderGraphCard(props) {
                     title={
                       <Row>
                         <Col>{d.description}</Col>
-                        {/* <Col>
-                          <span className="mr-2">Valor único:</span>
-                          <span>{addBrlCurrencyToNumber(d.uniqueValue)}</span>
-                        </Col>
-                        <Col>
-                          <span className="mr-2">Valor recorrente:</span>
-                          <span>
-                            {addBrlCurrencyToNumber(d.recurrenceValue)}
-                          </span>
-                        </Col> */}
                       </Row>
                     }
                   >
@@ -199,7 +181,6 @@ ServiceOrderGraphCard.propTypes = {
   openProposalDetail: PropTypes.func,
   chartHeight: PropTypes.number,
   loading: PropTypes.bool,
-  salesFunnelName: PropTypes.string,
 }
 
 export default ServiceOrderGraphCard

@@ -1,56 +1,30 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { apiCRM, apiServices, apiChecklist, apiContract } from '@services/api' // Assuming you have a separate API service for service orders
-import { message, Spin, Row, Col } from 'antd'
+import { Spin, Row, Col } from 'antd'
 import PropTypes from 'prop-types'
-import { getColor } from '@utils/dashboard'
 import { handleAuthError } from '@utils'
 import DashboardHeader from './DashboardHeader'
 import ServiceOrderStateCard from './ServiceOrderStateCard' // Assuming you have a new component for service order states
-import AverageTimeCard from './AverageTicketCard' // Assuming you have a new component for average time
 import ServiceOrderGraphCard from './ServiceOrderGraphCard' // Assuming you have a new component for service order funnel
 import ServiceOrderRankingCard from './ServiceOrderRankingCard' // Assuming you have a new component for service order ranking
 import ServiceOrderDetailModal from '../modals/ServiceOrderDetailModal'
 import AtendimentoRankingCard from './AtendimentoRankingCard' // Assuming you have a new component for service order ranking
-import TasksCard from './TasksCard'
-// import ServiceOrderDetailModal from '../modals/ProposalDetailModal' // Assuming you have a new modal for service order details
-import TaskDetailModal from '../modals/TaskDetailModal'
 import DashboardFooter from './DashboardFooter'
-
 import moment from 'moment/moment'
-import debounce from 'lodash/debounce'
-import { get } from 'http'
 
 const gutter = 18
 
 export default function ServiceOrderDashboard({ userPermissions }) {
-  const [profile, setProfile] = useState(null)
-  const [companyId, setCompanyId] = useState(null)
   const [viewOptionId, setViewOptionId] = useState(1)
-  const [viewOptions, setViewOptions] = useState([
-    { id: 1, name: 'Meus ordens de serviço' },
-  ])
-  const [serviceOrderType, setServiceOrderType] = useState(undefined)
-  const [serviceOrderFunnelId, setServiceOrderFunnelId] = useState(undefined)
   const [rangeDate, setRangeDate] = useState([
-    moment().startOf('month'),
-    moment().startOf('month'),
+    moment().subtract(1, 'months').startOf('month'),
+    moment().subtract(1, 'months').endOf('month'),
   ])
   const [loading, setLoading] = useState(true)
-  const [serviceOrderFunnels, setServiceOrderFunnels] = useState([])
-  const [franchisees, setFranchisees] = useState([])
-  const [franchiseeId, setFranchiseeId] = useState(undefined)
-  const [serviceOrderStates, setServiceOrderStates] = useState([])
-  const [keyServiceOrderRanking, setKeyServiceOrderRanking] = useState(0)
-  const [isOnline, setIsOnline] = useState(false)
-  const [logs, setLogs] = useState([])
-  const [businessAreaId, setBusinessAreaId] = useState(null)
-  const [businessAreas, setBusinessAreas] = useState([])
-  const [sellerId, setSellerId] = useState(null)
-  const [serviceOrderRankingType, setServiceOrderRankingType] = useState(null)
-  const [taskSummaryType, setTaskSummaryType] = useState(null)
 
   const [atendimentoRankingData, setAtendimentoRankingData] = useState([])
+  const [servicoRankingData, setServicoRankingData] = useState([])
   const [collaboratorData, setCollaboratorData] = useState([])
   const [servicoData, setServicoData] = useState([])
   const [classificacaoOSData, setClassificacaoOSData] = useState([])
@@ -60,6 +34,8 @@ export default function ServiceOrderDashboard({ userPermissions }) {
   const [qtOSAguardando, setQtOSAguardando] = useState(0)
   const [qtOSCanceladas, setQtOSCanceladas] = useState(0)
 
+  const [type, setType] = useState("")
+
   const [serviceOrderDetail, setServiceOrderDetail] = useState([])
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [serviceOrderDetailVisible, setServiceOrderDetailVisible] = useState(
@@ -68,32 +44,91 @@ export default function ServiceOrderDashboard({ userPermissions }) {
   const [serviceOrderDetailType, setServiceOrderDetailType] = useState("")
   const [serviceOrderDetailParams, setServiceOrderDetailParams] = useState(null)
 
-  const [classificacaoOSDataDetail, setClassificacaoOSDataDetail] = useState([])
-
   const [filterClients, setFilterClients] = useState([])
   const [filterServices, setFilterServices] = useState([])
   const [filterTypes, setFilterTypes] = useState([])
   const [filterClassOS, setFilterClassOS] = useState([])
 
-  const [allServiceOrderDetails, setAllServiceOrderDetails] = useState([])
+  // In ServiceOrderDashboard.jsx, add this near other state declarations
+  const [filterParams, setFilterParams] = useState({
+    tipoOSId: [],
+    colaboradorId: [],
+    classificacaoOsId: [],
+    pessoaId: [],
+    serviceOrderId: '',
+    selectedPeriod: 'PeriodoCriacaoOs',
+    rangeDate: [
+      moment().subtract(1, 'months').startOf('month'),
+      moment().subtract(1, 'months').endOf('month')
+    ]
+  });
+
+  const [filterTipoOSId, setFilterTipoOSId] = useState([])
+  const [filterColaboradorId, setFilterColaboradorId] = useState([])
+  const [filterClassificacaoOsId, setFilterClassificacaoOsId] = useState([])
+  const [filterPessoaId, setFilterPessoaId] = useState([])
+  const [filterServiceOrderId, setFilterServiceOrderId] = useState([])
+
+  const [selectedPeriod, setSelectedPeriod] = useState('PeriodoCriacaoOs')
 
   useEffect(() => {
     const fetchProfileAndData = async () => {
-      await getProfile()
-      if (companyId) {
-        fetchData()
-      }
+      await fetchData()
     }
     fetchProfileAndData()
-  }, [companyId])
+  }, [filterParams])
+
+  function getParams(selectedPeriod, rangeDate) {
+    const params = {
+      TipoOSId: filterParams.tipoOSId || [], // Add default empty array
+      ColaboradorId: filterParams.colaboradorId || [],
+      ClassificacaoOsId: filterParams.classificacaoOsId || [],
+      PessoaId: filterParams.pessoaId || [],
+      ServiceOrderId: filterParams.serviceOrderId || [],
+      ServicoId: filterParams.servicoId || [] // Add ServicoId parameter
+    }
+
+    // Only add date range if we have valid dates
+    if (rangeDate && rangeDate[0] && rangeDate[1]) {
+      const formattedDates = `${rangeDate[0].format('YYYY-MM-DDT00:00:00')}|${rangeDate[1].format('YYYY-MM-DDT23:59:59')}`
+
+      switch (selectedPeriod) {
+        case 'periodoApontamento':
+          params.PeriodoApontamento = formattedDates
+          break
+        case 'PeriodoCriacaoOs':
+          params.PeriodoCriacaoOs = formattedDates
+          break
+        case 'PeriodoLiquidaOs':
+          params.PeriodoLiquidaOs = formattedDates
+          break
+        case 'PeriodoCancelaOs':
+          params.PeriodoCancelaOs = formattedDates
+          break
+      }
+    }
+
+    return params
+  }
 
   async function openServiceOrderDetail(type, id, source) {
     setLoadingDetail(true)
     setServiceOrderDetailVisible(true)
 
     try {
-      console.log("collaboratorData", collaboratorData)
-      const params = getParams()
+      const params = getParams(selectedPeriod, rangeDate)
+      if (params.PeriodoCriacaoOs) {
+        params.PeriodoAbertura = params.PeriodoCriacaoOs
+        delete params.PeriodoCriacaoOs
+      }
+      if (params.PeriodoLiquidaOs) {
+        params.PeriodoLiquidacao = params.PeriodoLiquidaOs
+        delete params.PeriodoLiquidaOs
+      }
+      if (params.PeriodoCancelaOs) {
+        params.PeriodoCancelamento = params.PeriodoCancelaOs
+        delete params.PeriodoCancelaOs
+      }
       if (source === 'serviceOrderRankingService') {
         const service = servicoData.find(service => service.descricao === id)
         params.ServicoId = service ? service.servicoId : id
@@ -142,46 +177,8 @@ export default function ServiceOrderDashboard({ userPermissions }) {
     }
   }
 
-  async function getProfile() {
-    try {
-      const response = await apiCRM({
-        method: 'GET',
-        url: `/api/CRM/Owner`,
-      })
-      const { data } = response
-      if (data.isOk) {
-        setProfile(data)
-        setCompanyId(data.companyId)
-        if (data.ownerProfile === 'Franchisor') {
-          viewOptions.push({ id: 2, name: 'Todas as unidades' })
-          viewOptions.push({ id: 3, name: 'Unidade específica' })
-          setViewOptionId(2)
-          setViewOptions([...viewOptions])
-        }
-      } else {
-        message.error(data.message)
-      }
-    } catch (error) {
-      handleAuthError(error)
-    }
-  }
-
-  function getParams() {
-    const params = {
-      empresaId: '2',
-      //   empresaId: companyId,
-      periodoApontamento: '2018-01-01T00:00:00|2026-02-01T23:59:59',
-      //   periodoAbertura: '2018-01-01T00:00:00|2026-02-01T23:59:59',
-      //   periodoLiquidacao: '2018-01-01T00:00:00|2026-02-01T23:59:59',
-      //   periodoCancelamento: '2018-01-01T00:00:00|2026-02-01T23:59:59',
-      //   periodoLiquidacaoServico: '2018-01-01T00:00:00|2026-02-01T23:59:59',
-    }
-    return params
-  }
-
   async function getServices() {
     try {
-      // const params = getParams()
       const response = await apiCRM.get(
         '/api/CRM/Item?type=Service&queryOperator=like&status=1&getPriceList=true',
       )
@@ -195,9 +192,8 @@ export default function ServiceOrderDashboard({ userPermissions }) {
 
   async function getClassOS() {
     try {
-      // const params = getParams()
       const response = await apiContract.get(
-        '/api/Manufacturer/SOClassificationByOwner',
+        '/api/Manufacturer/SOClassificationByOwner'
       )
       setFilterClassOS(
         response.data.sOClassifications?.map(c => ({ label: c.serviceOrderClassificationDescription, value: c.serviceOrderClassificationId })),
@@ -209,7 +205,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
 
   async function getClients() {
     try {
-      // const params = getParams()
       const response = await apiCRM.get(
         '/api/crm/person?personType=&addressType=&name=&shortName=moacir&responsibleFranchiseeName=&cityName=&stateAbbreviation=&cnpj=&cpf=&queryOperator=like&qualificacaoId=&origemContatoId=&segmentoMercadoId=&areaNegocioId=&userName=&status=&hasTasks=&attribute=&email=&getPersonDetails=true',
       )
@@ -223,26 +218,12 @@ export default function ServiceOrderDashboard({ userPermissions }) {
 
   async function getTypes() {
     try {
-      // const params = getParams()
       const response = await apiChecklist.get(
         '/API/BusinessDocument/ServiceOrderTypesByOwner',
       )
       setFilterTypes(
         response.data.ServiceOrderTypes?.map(c => ({ label: `${c.Code} - ${c.Description}`, value: c.ServiceOrderTypeId })),
       )
-    } catch (error) {
-      console.error('Error fetching horas apontadas data:', error)
-    }
-  }
-
-  async function getOSNumber() {
-    try {
-      // const params = getParams()
-      const response = await apiServices.get(
-        '/api/OrdemServico?OrdemServicoNumero=102',
-      )
-      // setServicoData(response.data.item)
-      // setHorasApontadas(response.data)
     } catch (error) {
       console.error('Error fetching horas apontadas data:', error)
     }
@@ -261,50 +242,32 @@ export default function ServiceOrderDashboard({ userPermissions }) {
     }
   }
 
-  async function getCampos() {
+  async function fetchData() {
+    setLoading(true)
     try {
-      const params = getParams()
-      const response = await apiServices.get(
-        '/api/BuscarHorasApontadasView/campos',
-        {
-          params,
-        },
-      )
-      // setServicoData(response.data.item)
-      // setHorasApontadas(response.data)
+      const params = getParams(selectedPeriod, rangeDate)
+      await fetchOS(params)
+      // await getColaboradores()
+      await fetchAtendimentoRanking(params)
+      await fetchServicoRanking(params)
+      await fetchFilters()
     } catch (error) {
-      console.error('Error fetching horas apontadas data:', error)
+      console.error('Error fetching data:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  async function fetchData() {
-    setLoading(false)
-    await fetchOS()
-    await getClassificacaoDetail()
-    // await getHorasApontadas()
-    await fetchAtendimentoRanking()
-    await getCampos()
-    await getColaboradores()
-    await getClients()
+  async function fetchFilters() {
     await getTypes()
+    await getClients()
     await getServices()
     await getClassOS()
   }
 
-  async function getClassificacaoDetail() {
+  async function fetchOS(params) {
     try {
-      const response = await apiServices.get(
-        'Gravittem/contract/api/Manufacturer/SOClassificationByOwner',
-      )
-      setClassificacaoOSDataDetail(response.data)
-    } catch (error) {
-      console.error('Error fetching classificacao data:', error)
-    }
-  }
-
-  async function fetchOS() {
-    try {
-      const response = await apiServices.get('/api/TotalHorasApontadas')
+      const response = await apiServices.get('/api/TotalHorasApontadas', { params })
       setQtOSCriadas(response.data.osCriadas)
       setQtOSLiquidadas(response.data.osLiquidadas)
       setQtOSAguardando(qtOSCriadas - qtOSLiquidadas)
@@ -319,9 +282,9 @@ export default function ServiceOrderDashboard({ userPermissions }) {
     }
   }
 
-  async function fetchAtendimentoRanking() {
+  async function fetchAtendimentoRanking(params) {
     try {
-      const response = await apiServices.get('/api/RankingColaboradores')
+      const response = await apiServices.get('/api/RankingColaboradores', { params })
       const formattedData = response.data.colaborador.map(item => ({
         id: item.colaboradorId,
         name: item.colaborador,
@@ -338,6 +301,25 @@ export default function ServiceOrderDashboard({ userPermissions }) {
     }
   }
 
+  async function fetchServicoRanking(params) {
+    try {
+      const response = await apiServices.get("/api/RankingServicos", { params },)
+      const formattedData = response.data.map(item => ({
+        id: item.serviceOrderId,
+        name: item.servico, // Will show in "Serviço" column
+        hours: item.totalHorasCobranca, // Will show in "Horas atendimento" column
+        orders: item.qtOS, // Will show in "Ordens de serviço" column
+        // Keep additional data for reference
+        totalHorasTrabalhadas: item.totalHorasTrabalhadas,
+        totalHorasDeslocamento: item.totalHorasDeslocamento,
+        totalHorasCobranca: item.totalHorasCobranca
+      }))
+      setServicoRankingData(formattedData)
+    } catch (error) {
+      console.error('Error fetching atendimento ranking data:', error)
+    }
+  }
+
   return (
     <React.Fragment>
       <ServiceOrderDetailModal
@@ -347,7 +329,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
         serviceOrderDetail={serviceOrderDetail}
         serviceOrderDetailType={serviceOrderDetailType}
         serviceOrderDetailParams={serviceOrderDetailParams}
-        profile={profile}
       />
       <Spin size="large" spinning={loading}>
         <DashboardHeader
@@ -358,17 +339,22 @@ export default function ServiceOrderDashboard({ userPermissions }) {
             filterTypes,
             filterServices,
             filterClassOS,
+            setFilterParams,
+            filterParams,
             rangeDate,
             setRangeDate,
-            profile,
-            setBusinessAreaId,
-            sellerId,
-            // setSalesRankingType,
-            setTaskSummaryType,
             setFilterTypes,
             setFilterClients,
             setFilterServices,
             setFilterClassOS,
+            setFilterTipoOSId,
+            setFilterColaboradorId,
+            setFilterClassificacaoOsId,
+            setFilterPessoaId,
+            setFilterServiceOrderId,
+            fetchData,
+            selectedPeriod,
+            setSelectedPeriod,
           }}
         />
         <Row type="flex" gutter={gutter}>
@@ -377,9 +363,7 @@ export default function ServiceOrderDashboard({ userPermissions }) {
               <Col span={12}>
                 <ServiceOrderStateCard
                   type={1}
-                  //   loading={loadingServiceOrderState}
                   loading={false}
-                  serviceOrderState={serviceOrderStates.find(x => x.type === 1)}
                   qtOSCriadas={qtOSCriadas}
                   qtOSLiquidadas={qtOSLiquidadas}
                   qtOSAguardando={qtOSAguardando}
@@ -387,15 +371,12 @@ export default function ServiceOrderDashboard({ userPermissions }) {
                   openServiceOrderDetail={(type, id) =>
                     openServiceOrderDetail(type, id, 'serviceOrderState')
                   }
-                // openServiceOrderDetail={openServiceOrderDetail}
                 />
               </Col>
               <Col span={12}>
                 <ServiceOrderStateCard
                   type={2}
-                  //   loading={loadingServiceOrderState}
                   loading={false}
-                  serviceOrderState={serviceOrderStates.find(x => x.type === 2)}
                   qtOSCriadas={qtOSCriadas}
                   qtOSLiquidadas={qtOSLiquidadas}
                   qtOSAguardando={qtOSAguardando}
@@ -403,7 +384,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
                   openServiceOrderDetail={(type, id) =>
                     openServiceOrderDetail(type, id, 'serviceOrderStateLiq')
                   }
-                //   openServiceOrderDetail={(type, id) => openServiceOrderDetail(type, id, 'serviceOrderState')}
                 />
               </Col>
             </Row>
@@ -411,9 +391,7 @@ export default function ServiceOrderDashboard({ userPermissions }) {
               <Col span={12}>
                 <ServiceOrderStateCard
                   type={3}
-                  //   loading={loadingServiceOrderState}
                   loading={false}
-                  serviceOrderState={serviceOrderStates.find(x => x.type === 3)}
                   qtOSCriadas={qtOSCriadas}
                   qtOSLiquidadas={qtOSLiquidadas}
                   qtOSAguardando={qtOSAguardando}
@@ -421,15 +399,12 @@ export default function ServiceOrderDashboard({ userPermissions }) {
                   openServiceOrderDetail={(type, id) =>
                     openServiceOrderDetail(type, id, 'serviceOrderStateWaitingLiq')
                   }
-                //   openServiceOrderDetail={(type, id) => openServiceOrderDetail(type, id, 'serviceOrderState')}
                 />
               </Col>
               <Col span={12}>
                 <ServiceOrderStateCard
                   type={4}
-                  //   loading={loadingServiceOrderState}
                   loading={false}
-                  serviceOrderState={serviceOrderStates.find(x => x.type === 4)}
                   qtOSCriadas={qtOSCriadas}
                   qtOSLiquidadas={qtOSLiquidadas}
                   qtOSAguardando={qtOSAguardando}
@@ -437,7 +412,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
                   openServiceOrderDetail={(type, id) =>
                     openServiceOrderDetail(type, id, 'serviceOrderStateCancel')
                   }
-                //   openServiceOrderDetail={openServiceOrderDetail}
                 />
               </Col>
             </Row>
@@ -447,31 +421,21 @@ export default function ServiceOrderDashboard({ userPermissions }) {
               <Col span={12}>
                 <ServiceOrderRankingCard
                   data={servicoData}
-                  //   loading={loadingRanking}
                   loading={false}
                   type={1}
-                  setType={setServiceOrderRankingType}
-                  key={keyServiceOrderRanking}
                   openServiceOrderDetail={(type, id) =>
                     openServiceOrderDetail(type, id, 'serviceOrderRankingService')
                   }
-                  //   openServiceOrderDetail={openServiceOrderDetail}
-                  profile={profile}
                 />
               </Col>
               <Col span={12}>
                 <ServiceOrderRankingCard
                   data={classificacaoOSData}
-                  //   loading={loadingRanking}
                   loading={false}
                   type={2}
-                  setType={setServiceOrderRankingType}
                   openServiceOrderDetail={(type, id) =>
                     openServiceOrderDetail(type, id, 'serviceOrderRankingClass')
                   }
-                  key={keyServiceOrderRanking}
-                  //   openServiceOrderDetail={openServiceOrderDetail}
-                  profile={profile}
                 />
               </Col>
             </Row>
@@ -489,9 +453,6 @@ export default function ServiceOrderDashboard({ userPermissions }) {
                 openServiceOrderDetail(type, id, 'typeOSGraph')
               }
               loading={false}
-            // openProposalDetail={(type, id) =>
-            //   console.log(`Open detail for ${type} with id ${id}`)
-            // }
             />
           </Col>
           <Col span={8}>
@@ -505,31 +466,24 @@ export default function ServiceOrderDashboard({ userPermissions }) {
               salesFunnelName="Mock Funnel"
               chartHeight={280}
               loading={false}
-            // openProposalDetail={(type, id) =>
-            //   console.log(`Open detail for ${type} with id ${id}`)
-            // }
             />
           </Col>
           <Col span={8}>
             <AtendimentoRankingCard
               data={atendimentoRankingData}
-              //   loading={loadingRanking}
+              serviceData={servicoRankingData}
               loading={false}
               openServiceOrderDetail={(type, id) =>
                 openServiceOrderDetail(type, id, 'atendimentoRanking')
               }
-              setType={setServiceOrderRankingType}
-              key={keyServiceOrderRanking}
-              profile={profile}
+              type={type}
+              setType={setType}
             />
           </Col>
         </Row>
         <DashboardFooter
-          logs={logs}
-          //   loading={loading}
           loading={false}
           setLoading={setLoading}
-          //   fetchData={fetchData}
           userPermissions={userPermissions}
         />
       </Spin>

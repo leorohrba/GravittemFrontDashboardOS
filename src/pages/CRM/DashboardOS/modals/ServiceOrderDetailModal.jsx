@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Button, Modal, Row, Skeleton, Spin, Pagination } from 'antd'
 import DefaultTable from '@components/DefaultTable'
-import { customSort, formatNumber } from '@utils'
+import { customSort } from '@utils'
 import moment from 'moment'
 import ReactExport from 'react-data-export'
 import PropTypes from 'prop-types'

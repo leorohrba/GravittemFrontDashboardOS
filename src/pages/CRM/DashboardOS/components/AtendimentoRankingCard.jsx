@@ -7,13 +7,15 @@ export default function AtendimentoRankingCard({
   setType,
   loading,
   data,
+  serviceData,
   openProposalDetail,
   profile,
   openServiceOrderDetail,
+  type
 }) {
   const columns = [
     {
-      title: 'Colaborador',
+      title: type === 'service' ? 'Serviço' : 'Colaborador', // Dynamic title
       dataIndex: 'name',
       key: 'name',
     },
@@ -71,7 +73,7 @@ export default function AtendimentoRankingCard({
                   profile?.ownerProfile === 'Standard' ? 'none' : 'block',
               }}
             >
-              <Tooltip title="Visualizar ranking de vendas por franquia">
+              <Tooltip title="Visualizar ranking de atendimento por colaborador">
                 <i
                   className="cursor-pointer fa fa-building-o"
                   role="button"
@@ -81,12 +83,12 @@ export default function AtendimentoRankingCard({
               </Tooltip>
             </Col>
             <Col>
-              <Tooltip title="Visualizar ranking de vendas por área de negócio">
+              <Tooltip title="Visualizar ranking de atendimento por serviço">
                 <i
                   className="cursor-pointer fa fa-briefcase"
                   role="button"
                   style={{ color: '#3182ce' }}
-                  onClick={() => setType('businessArea')}
+                  onClick={() => setType('service')}
                 />
               </Tooltip>
             </Col>
@@ -97,7 +99,7 @@ export default function AtendimentoRankingCard({
           size="small"
           rowKey={record => record.id}
           columns={columns}
-          dataSource={data}
+          dataSource={type === 'service' ? serviceData : data}
           pagination={false}
           onRow={(record) => ({
             onClick: () => handleRowClick(record),
@@ -115,4 +117,5 @@ AtendimentoRankingCard.propTypes = {
   openProposalDetail: PropTypes.func,
   profile: PropTypes.any,
   openServiceOrderDetail: PropTypes.func,
+  type: PropTypes.string // Add this prop type
 }
