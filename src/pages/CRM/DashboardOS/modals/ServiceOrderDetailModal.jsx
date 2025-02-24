@@ -117,7 +117,7 @@ const ServiceOrderDetailModal = ({
       key: 'name',
     },
     {
-      title: 'Horas apontadas',
+      title: 'Horas atendimento',
       dataIndex: 'hours',
       key: 'hours',
       sorter: (a, b) => a.hours.localeCompare(b.hours),
@@ -128,7 +128,7 @@ const ServiceOrderDetailModal = ({
       ),
     },
     {
-      title: 'Horas paradas',
+      title: 'Horas deslocamento',
       dataIndex: 'orders',
       key: 'orders',
       sorter: (a, b) => a.orders.localeCompare(b.orders),
@@ -147,15 +147,21 @@ const ServiceOrderDetailModal = ({
       sorter: (a, b) => a.numeroOs - b.numeroOs,
     },
     {
-      title: 'Colaborador',
-      dataIndex: 'colaborador',
-      sorter: (a, b) => customSort(a.colaborador, b.colaborador),
+      title: 'Data apontamento',
+      dataIndex: 'dataApontamento',
+      sorter: (a, b) => customSort(a.dataApontamento, b.dataApontamento),
+      render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
     },
     {
-      title: 'Tipo Hora Apontada',
-      dataIndex: 'tipoHoraApontada',
-      sorter: (a, b) =>
-        customSort(a.tipoHoraApontada, b.tipoHoraApontada),
+      title: 'Data criação OS',
+      dataIndex: 'dataCriacaoOs',
+      sorter: (a, b) => customSort(a.dataCriacaoOs, b.dataCriacaoOs),
+      render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
+    },
+    {
+      title: 'Classificação da OS',
+      dataIndex: 'classificacaoOs',
+      sorter: (a, b) => customSort(a.classificacaoOs, b.classificacaoOs),
     },
     {
       title: 'Cliente',
@@ -163,58 +169,42 @@ const ServiceOrderDetailModal = ({
       sorter: (a, b) => customSort(a.cliente, b.cliente),
     },
     {
-      title: 'Serviço',
-      dataIndex: 'servico',
-      sorter: (a, b) => customSort(a.servico, b.servico),
+      title: 'Colaborador',
+      dataIndex: 'colaborador',
+      sorter: (a, b) => customSort(a.colaborador, b.colaborador),
     },
     {
-      title: 'Status Serviço',
-      dataIndex: 'statusServico',
-      sorter: (a, b) => customSort(a.statusServico, b.statusServico),
-    },
-    {
-      title: 'Status OS',
-      dataIndex: 'statusOs',
-      sorter: (a, b) => customSort(a.statusOs, b.statusOs),
-    },
-    {
-      title: 'Data Apontamento',
-      dataIndex: 'dataApontamento',
-      sorter: (a, b) => customSort(a.dataApontamento, b.dataApontamento),
-      render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
-    },
-    {
-      title: 'Data Criação OS',
-      dataIndex: 'dataCriacaoOs',
-      sorter: (a, b) => customSort(a.dataCriacaoOs, b.dataCriacaoOs),
-      render: text => (text ? moment(text).format('DD/MM/YYYY') : ''),
-    },
-    {
-      title: 'Hora Início',
+      title: 'Hr. início',
       dataIndex: 'horaInicio',
       sorter: (a, b) => customSort(a.horaInicio, b.horaInicio),
     },
     {
-      title: 'Hora Final',
+      title: 'Intervalo',
+      dataIndex: 'horaIntervalo',
+      sorter: (a, b) => customSort(a.horaIntervalo, b.horaIntervalo),
+    },
+    {
+      title: 'Hr. final',
       dataIndex: 'horaFinal',
       sorter: (a, b) => customSort(a.horaFinal, b.horaFinal),
     },
     {
-      title: 'Horas Trabalhadas',
+      title: 'Total hr.',
       dataIndex: 'horasTrabalhadas',
       sorter: (a, b) =>
         customSort(a.horasTrabalhadas, b.horasTrabalhadas),
     },
     {
-      title: 'Horas Deslocamento',
+      title: 'Hr. deslocamento',
       dataIndex: 'horasDeslocamento',
       sorter: (a, b) =>
         customSort(a.horasDeslocamento, b.horasDeslocamento),
     },
     {
-      title: 'Horas Cobrança',
-      dataIndex: 'horasCobranca',
-      sorter: (a, b) => customSort(a.horasCobranca, b.horasCobranca),
+      title: 'Descrição da atividade',
+      dataIndex: 'atividade',
+      sorter: (a, b) =>
+        customSort(a.atividade, b.atividade),
     },
   ]
 

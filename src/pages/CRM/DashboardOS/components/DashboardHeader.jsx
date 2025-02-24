@@ -20,8 +20,19 @@ export default function DashboardHeader(props) {
   } = props
 
   useEffect(() => {
+    // if (filterTypes?.length > 0) {
+    //   const allTypeIds = filterTypes.map(type => type.value)
+    //   setFilterParams(prev => ({
+    //     ...prev,
+    //     tipoOSId: allTypeIds
+    //   }))
+    // }
     fetchData()
   }, [rangeDate, selectedPeriod, filterParams])
+
+  // useEffect(() => {
+
+  // }, [filterTypes])
 
   // Update the handlers to use setFilterParams
   const handleSetFilterTypes = (value) => {
@@ -87,6 +98,7 @@ export default function DashboardHeader(props) {
               placeholder="Selecione os tipos"
               style={{ width: '100%' }}
               onChange={handleSetFilterTypes}
+              value={filterParams?.tipoOSId || []}
             >
               {filterTypes?.map(client => (
                 <Option key={client.value} value={client.value}>
